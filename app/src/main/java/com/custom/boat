@@ -1,0 +1,56 @@
+package com.custom.boat
+
+import android.media.audiofx.Equalizer
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+class MainActivity : ComponentActivity() {
+    private var globalEq: Equalizer? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            var eqEnabled by remember { mutableStateOf(false) }
+            MaterialTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "boAt Custom Controller", style = MaterialTheme.typography.headlineMedium)
+                        Spacer(modifier = Modifier.height(32.dp))
+                        Row(modifier = Modifier.padding(vertical = 16.dp)) {
+                            Text(text = "Knowles Signature EQ")
+                            Spacer(modifier = Modifier.weight(1f))
+                            Switch(
+                                checked = eqEnabled,
+                                onCheckedChange = { eqEnabled = it; toggleEq(it) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun toggleEq(enable: Boolean) {
+        if (enable) {
+            try {
+                globalEq = Equalizer(0, 0).apply {
+                    enabled = true
+                    val knowlesCurve = floatArrayOf(0.15f, 0.05f, 0.20f, 0.40f, 0.35f)
+                    for (i in 0 until minOf(numberOfBands.toInt(), knowlesCurve.size)) {
+                        val target = (bandLevelRange[0] + (bandLevelRange[1] - bandLevelRange[0]) * knowlesCurve[i]).toInt()
+                        setBandLevel(i.toShort(), target.toShort())
+                    }
+                }
+            } catch (e: Exception) {}
+        } else {
+            globalEq?.release()
+            globalEq = null
+        }
+    }
+}
